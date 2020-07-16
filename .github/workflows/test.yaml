@@ -29,14 +29,10 @@ jobs:
         id: pr-details
         with:
           script: |
-            core.info("Owner: " + context.repo.owner);
-            core.info("Repo: " + context.repo.repo);
-            core.info("IssueNr: " + context.issue.number);
-            core.info("PullNr: " + context.payload.pull_request.number);
             const { data: pullRequest } = await github.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
+              pull_number: context.issue.number
             });
             core.info("Pull request: " + pullRequest);
             return pullRequest;
