@@ -17,23 +17,33 @@ jobs:
       && startsWith(github.event.comment.body, '/test_command')
     steps:
       - uses: actions/github-script@v2
+        with:
+          script: |
+            github.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: "+1"
+            })
+      - uses: actions/github-script@v2
         id: pr-details
         with:
           script: |
             core.info("Owner: " + context.repo.owner);
             core.info("Repo: " + context.repo.repo);
-            core.info("PullNr: " + context.issue.number);
+            core.info("IssueNr: " + context.issue.number);
+            core.info("PullNr: " + context.payload.pull_request.number);
             const { data: pullRequest } = await github.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number
+              pull_number: context.payload.pull_request.number
             });
             core.info("Pull request: " + pullRequest);
             return pullRequest;
       - uses: actions/checkout@v2
         with:
           repository: ${{fromJSON(steps.pr-details.outputs.result).head.repo.full_name}}
-          ref: ${{fromJSON(steps.pr-details.outputs.result).head.sha}}
+          ref: ${{fromJSON(steps.pr-details.outputs.result).head.ref}}
           fetch-depth: 0
       - uses: danger/swift@3.3.1
         with:
