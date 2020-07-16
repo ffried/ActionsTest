@@ -1,0 +1,42 @@
+name: GHA-Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  issue_comment:
+    types: [ created ]
+
+jobs:
+  test-job:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issue_comment' && github.event.action == 'created'
+      && github.event.issue.pull_request != null
+      && startsWith(github.event.comment.body, '/test_command')
+    steps:
+      - uses: actions/github-script@v2
+        id: pr-details
+        with:
+          script: |
+            core.info("Pull request: " + pullRequest);
+            core.info("Owner: " + context.repo.owner);
+            core.info("Repo: " + context.repo.repo);
+            core.info("PullNr: " + context.issue.number);
+            const { data: pullRequest } = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            return pullRequest;
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{fromJSON(steps.pr-details.outputs.result).head.repo.full_name}}
+          ref: ${{fromJSON(steps.pr-details.outputs.result).head.sha}}
+          fetch-depth: 0
+      - uses: danger/swift@3.3.1
+        with:
+          args: "--pr ${{github.event.issue.pull_request.url}}"
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
