@@ -10,4 +10,7 @@ fileprivate extension Danger.File {
 let danger = Danger()
 //let git = danger.git
 
+if Bool.random() {
+   danger.warn("Random warning")
+}
 
